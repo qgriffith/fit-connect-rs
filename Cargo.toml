@@ -10,3 +10,4 @@ withings-rs = {path = "../withings-rs"}
 strava-client-rs = {path = "../strava-client-rs"}
 simple_logger = "4.3.3"
 chrono = "0.4.34"
+clap = "4.5.1"

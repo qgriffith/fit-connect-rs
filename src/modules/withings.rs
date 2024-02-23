@@ -67,9 +67,9 @@ pub fn get_weight_by_date(lastupdate: String) -> Result<f64, String> {
 /// # Returns
 ///
 /// - A string containing the timestamp of the day before the current time.
-pub fn get_day_before_timestamp() -> String {
+pub fn get_day_before_timestamp(day: i64) -> String {
     let current_time: DateTime<Local> = Local::now();
-    let a_day_before = current_time - Duration::days(1);
+    let a_day_before = current_time - Duration::days(day);
     let day_before_timestamp = a_day_before.timestamp();
 
     day_before_timestamp.to_string()
