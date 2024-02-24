@@ -46,3 +46,19 @@ fn get_access_token(config_file: String) -> Result<String, String> {
         Ok(access_token.unwrap().to_string())
     }
 }
+
+/// Synchronizes the athlete's weight to Strava.
+///
+/// # Arguments
+///
+/// * `weight_in_kgs` - The athlete's weight in kilograms. If `None`, the function panics.
+///
+/// # Panics
+///
+/// The function panics if `weight_in_kgs` is `None`.
+pub fn sync_strava(weight_in_kgs: Option<String>) {
+    println!("Syncing to Strava...\n");
+    let weight = weight_in_kgs.unwrap();
+    update_athlete_weight(weight.as_str());
+    println!("Weight updated in Strava to {} kg\n", weight);
+}
