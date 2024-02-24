@@ -1,17 +1,17 @@
-mod modules;
 mod cli;
+mod modules;
 
-use crate::modules::withings::{get_day_before_timestamp, get_weight_by_date};
-use std::process::exit;
 use crate::cli::cli;
 use crate::modules::strava::update_athlete_weight;
+use crate::modules::withings::{get_day_before_timestamp, get_weight_by_date};
+use std::process::exit;
 
 /// Process the command-line interface (CLI)
 ///
 /// This function processes the CLI subcommand and performs the required actions based on the subcommand.
-fn process_cli()  {
+fn process_cli() {
     match cli().subcommand() {
-        Some(("withings", withing_matches )) => {
+        Some(("withings", withing_matches)) => {
             if withing_matches.contains_id("last") {
                 let day_offset = withing_matches.get_one::<i64>("last").expect("contains_id");
                 println!("Getting weight for the day from {}\n", day_offset);
@@ -21,7 +21,7 @@ fn process_cli()  {
                 }
             }
         }
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -60,7 +60,6 @@ fn get_and_format_weight(day_offset: i64) -> Option<String> {
         }
     }
 }
-
 
 fn main() {
     process_cli();

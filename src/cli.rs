@@ -1,4 +1,4 @@
-use clap::{value_parser, Arg, ArgAction, Command, ArgMatches};
+use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 /// Creates the last argument for weigh-in.
 ///
@@ -13,7 +13,9 @@ fn create_last_arg() -> Arg {
         .long("last")
         .help("Last weigh-in. Set to 1 for current day, 2 for the previous etc...")
         .action(ArgAction::Set)
+        .default_value("1")
         .default_missing_value("1")
+        .required(true)
         .num_args(0..=1)
         .value_parser(value_parser!(i64))
 }
@@ -56,5 +58,6 @@ pub(crate) fn cli() -> ArgMatches {
                 .about("Get Data from Withings")
                 .arg(create_last_arg())
                 .arg(create_strava_sync_arg()),
-        ).get_matches()
+        )
+        .get_matches()
 }
