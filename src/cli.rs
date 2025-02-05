@@ -1,63 +1,41 @@
-use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
+use crate::modules::strava;
+use crate::utils::get_and_format_weight;
+use clap::{Parser, Subcommand};
 
-/// Creates the last argument for weigh-in.
-///
-/// The `last` argument is used to specify the weigh-in date relative to the current day.
-/// It can be set to `1` for the current day, `2` for the previous day, and so on.
-///
-/// # Returns
-/// Returns an instance of `Arg` struct that represents the `last` argument.
-fn create_last_arg() -> Arg {
-    Arg::new("last")
-        .short('l')
-        .long("last")
-        .help("Last weigh-in. Set to 1 for current day, 2 for the previous etc...")
-        .action(ArgAction::Set)
-        .default_value("1")
-        .default_missing_value("1")
-        .required(true)
-        .num_args(0..=1)
-        .value_parser(value_parser!(i64))
+#[derive(Parser)]
+#[command(version, about, long_about = None, arg_required_else_help = true)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
 }
 
-/// Creates a command line argument for enabling weight synchronization with Strava.
-///
-/// The `-s` or `--strava-sync` option can be used to enable weight synchronization with Strava.
-/// By default, weight synchronization is disabled.
-///
-/// The `strava_sync_enabled` variable will be `true` if the `-s` or `--strava-sync` option is provided.
-///
-/// # Returns
-///
-/// The `Arg` struct representing the `--strava-sync` command line option.
-fn create_strava_sync_arg() -> Arg {
-    Arg::new("strava-sync")
-        .long("strava-sync")
-        .short('s')
-        .help("Sync weight to strava")
-        .action(ArgAction::SetTrue)
-        .required(false)
+#[derive(Subcommand)]
+enum Commands {
+    Withings {
+        #[clap(short, long)]
+        last_weight: i64,
+        #[clap(short, long)]
+        strava_sync: bool,
+    },
 }
 
-/// Returns a `Command` object for the `fitness-connect` CLI.
-///
-/// # Return
-///
-/// Returns a `Command` object for the `fitness-connect` CLI.
-pub(crate) fn cli() -> ArgMatches {
-    Command::new("fitness-connect")
-        .about("A sync tool for various fitness apps")
-        .version("0.1.0")
-        .subcommand_required(true)
-        .arg_required_else_help(true)
-        // Withings subcommand
-        .subcommand(
-            Command::new("withings")
-                .short_flag('W')
-                .long_flag("withings")
-                .about("Get Data from Withings")
-                .arg(create_last_arg())
-                .arg(create_strava_sync_arg()),
-        )
-        .get_matches()
+pub fn cli() {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Some(Commands::Withings {
+            last_weight,
+            strava_sync,
+        }) => {
+            let weight_in_kgs = get_and_format_weight(last_weight);
+            println!("weight: {:?}", weight_in_kgs);
+            println!("strava_sync: {:?}", strava_sync);
+            if strava_sync {
+                strava::sync_strava(weight_in_kgs);
+            }
+        }
+        None => {
+            println!("No command specified");
+        }
+    }
 }

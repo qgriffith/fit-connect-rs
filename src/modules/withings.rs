@@ -3,6 +3,7 @@ use std::env;
 use std::path::Path;
 use std::process::exit;
 use withings_rs::{
+    api,
     api::{auth, measure},
     models::{meas::CategoryType, MeasureType},
 };
@@ -16,7 +17,7 @@ fn get_env_var(name: &str) -> String {
 fn get_access_token() -> Result<String, String> {
     let client_secret = get_env_var("WITHINGS_CLIENT_SECRET");
     let client_id = get_env_var("WITHINGS_CLIENT_ID");
-    let config_file = auth::get_config_file();
+    let config_file = api::config::get_config_file();
 
     let access_token = if Path::new(&config_file).exists() {
         auth::refresh_token(client_id, client_secret)
