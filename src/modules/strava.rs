@@ -1,6 +1,7 @@
 use std::env;
 use std::path::Path;
 use strava_client_rs::api::{athlete, auth};
+use strava_client_rs::models::athlete::AthleteStats;
 use strava_client_rs::models::AthleteCollection;
 use strava_client_rs::util::auth_config;
 const AUTH_URL: &'static str = "http://www.strava.com/oauth/authorize";
@@ -15,6 +16,15 @@ pub fn update_athlete_weight(weight: &str) -> String {
     let access_token = create_and_get_access_token();
     let athlete = athlete::update_athlete_weight(access_token.as_str(), weight).unwrap();
     athlete.status().to_string()
+}
+
+pub fn get_athlete_stats() -> Result<AthleteStats, Box<dyn std::error::Error>> {
+    let access_token = create_and_get_access_token();
+    dbg!(&access_token);
+    let auth_athlete = get_authed_athlete();
+    let athlete_stats =
+        athlete::get_athlete_stats(access_token.as_str(), &auth_athlete.id.to_string()).unwrap();
+    Ok(athlete_stats)
 }
 
 fn create_and_get_access_token() -> String {

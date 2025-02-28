@@ -17,6 +17,10 @@ enum Commands {
         #[clap(short, long)]
         strava_sync: bool,
     },
+    Strava {
+        #[clap(short, long)]
+        get_stats: bool,
+    },
 }
 
 pub fn cli() {
@@ -32,6 +36,12 @@ pub fn cli() {
             println!("strava_sync: {:?}", strava_sync);
             if strava_sync {
                 strava::sync_strava(weight_in_kgs);
+            }
+        }
+        Some(Commands::Strava { get_stats }) => {
+            if get_stats {
+                let athlete = strava::get_athlete_stats();
+                println!("Stats {:#?}", athlete.unwrap());
             }
         }
         None => {
