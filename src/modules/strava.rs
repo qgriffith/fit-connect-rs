@@ -20,7 +20,7 @@ pub fn update_athlete_weight(weight: &str) -> String {
 
 pub fn get_athlete_stats() -> Result<AthleteStats, Box<dyn std::error::Error>> {
     let access_token = create_and_get_access_token();
-    dbg!(&access_token);
+
     let auth_athlete = get_authed_athlete();
     let athlete_stats =
         athlete::get_athlete_stats(access_token.as_str(), &auth_athlete.id.to_string()).unwrap();
