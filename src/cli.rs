@@ -6,6 +6,10 @@ use colored_json::to_colored_json_auto;
 #[derive(Parser)]
 #[command(version, about, long_about = None, arg_required_else_help = true)]
 struct Cli {
+    ///Optional to enable logging
+    #[arg(short, long)]
+    log: bool,
+
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -28,6 +32,10 @@ enum Commands {
 
 pub fn cli() {
     let cli = Cli::parse();
+
+    if cli.log {
+        simple_logger::SimpleLogger::new().env().init().unwrap();
+    }
 
     match cli.command {
         Some(Commands::Withings {
