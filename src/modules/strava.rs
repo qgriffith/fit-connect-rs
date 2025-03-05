@@ -3,7 +3,7 @@
 //! This module provides functionality to interact with the Strava API,
 //! including authentication, athlete data retrieval, and weight updates.
 
-use miette::{Context, IntoDiagnostic, Result, WrapErr};
+use miette::{Context, IntoDiagnostic, Result};
 use std::{env, path::Path};
 
 use strava_client_rs::api::{athlete, auth};

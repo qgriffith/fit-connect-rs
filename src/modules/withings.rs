@@ -8,7 +8,7 @@ use withings_rs::{
     models::{meas::CategoryType, MeasureType},
 };
 fn get_env_var(name: &str) -> String {
-    env::var(name).unwrap_or_else(|e| {
+    env::var(name).unwrap_or_else(|_e| {
         eprint!("{} env var not set", name);
         exit(1);
     })
