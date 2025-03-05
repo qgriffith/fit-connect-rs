@@ -1,74 +1,234 @@
-use std::env;
-use std::path::Path;
+//! Strava API client module for athlete management and authentication.
+//!
+//! This module provides functionality to interact with the Strava API,
+//! including authentication, athlete data retrieval, and weight updates.
+
+use miette::{Context, IntoDiagnostic, Result, WrapErr};
+use std::{env, path::Path};
+
 use strava_client_rs::api::{athlete, auth};
-use strava_client_rs::models::athlete::AthleteStats;
 use strava_client_rs::models::AthleteCollection;
 use strava_client_rs::util::auth_config;
-const AUTH_URL: &'static str = "http://www.strava.com/oauth/authorize";
-const TOKEN_URL: &'static str = "https://www.strava.com/oauth/token";
-pub fn get_authed_athlete() -> AthleteCollection {
-    let access_token = create_and_get_access_token();
-    let athlete = athlete::get_athlete(access_token.as_str()).unwrap();
-    athlete
+
+/// Possible errors that can occur during Strava API operations.
+#[derive(Debug, thiserror::Error, miette::Diagnostic)]
+pub enum StravaError {
+    /// Authentication-related errors, such as invalid tokens or failed authentication attempts.
+    #[error("Authentication failed")]
+    #[diagnostic(code(strava::auth::failed))]
+    Authentication {
+        /// The underlying error that caused the authentication failure
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync>,
+        /// Helpful message for resolving the authentication issue
+        #[help]
+        help: Option<String>,
+    },
+
+    /// Configuration-related errors, such as missing environment variables.
+    #[error("Configuration error: {message}")]
+    #[diagnostic(code(strava::config::invalid))]
+    Config {
+        /// Description of the configuration error
+        message: String,
+        /// Guidance on how to fix the configuration
+        #[help]
+        help: String,
+    },
+
+    /// API-related errors, such as failed requests or invalid responses.
+    #[error("API error: {message}")]
+    #[diagnostic(code(strava::api::error))]
+    Api {
+        /// Description of the API error
+        message: String,
+        /// Additional context about the API call
+        #[source_code]
+        src: Option<String>,
+    },
 }
 
-pub fn update_athlete_weight(weight: &str) -> String {
-    let access_token = create_and_get_access_token();
-    let athlete = athlete::update_athlete_weight(access_token.as_str(), weight).unwrap();
-    athlete.status().to_string()
+/// Authentication configuration for Strava API.
+const AUTH_CONFIG: StravaAuthConfig = StravaAuthConfig {
+    auth_url: "http://www.strava.com/oauth/authorize",
+    token_url: "https://www.strava.com/oauth/token",
+    config_file_env: "STRAVA_CONFIG_FILE",
+    default_config_file: "config.json",
+    client_id_env: "STRAVA_CLIENT_ID",
+    client_secret_env: "STRAVA_CLIENT_SECRET",
+};
+
+/// Configuration structure holding authentication-related constants and environment variable names.
+struct StravaAuthConfig {
+    /// URL for the OAuth authorization endpoint
+    auth_url: &'static str,
+    /// URL for the OAuth token endpoint
+    token_url: &'static str,
+    /// Environment variable name for the config file path
+    config_file_env: &'static str,
+    /// Default configuration file name
+    default_config_file: &'static str,
+    /// Environment variable name for the client ID
+    client_id_env: &'static str,
+    /// Environment variable name for the client secret
+    client_secret_env: &'static str,
 }
 
-pub fn get_athlete_stats() -> Result<AthleteStats, Box<dyn std::error::Error>> {
-    let access_token = create_and_get_access_token();
+/// Retrieves the authenticated athlete's profile information from Strava.
+///
+/// # Returns
+///
+/// Returns a `Result` containing the athlete's profile information if successful,
+/// or a `StravaError` if the operation fails.
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - Authentication fails
+/// - The API request fails
+/// - The response cannot be parsed
+pub fn get_authenticated_athlete() -> Result<AthleteCollection> {
+    let access_token = obtain_access_token().wrap_err("Failed to obtain access token")?;
 
-    let auth_athlete = get_authed_athlete();
-    let athlete_stats =
-        athlete::get_athlete_stats(access_token.as_str(), &auth_athlete.id.to_string()).unwrap();
-    Ok(athlete_stats)
+    athlete::get_athlete(&access_token)
+        .map_err(|e| StravaError::Api {
+            message: "Failed to get athlete information".to_string(),
+            src: Some(e.to_string()),
+        })
+        .into_diagnostic()
 }
 
-fn create_and_get_access_token() -> String {
-    let config_file = env::var("STRAVA_CONFIG_FILE").unwrap_or_else(|_| "config.json".to_string());
-    get_access_token(config_file).unwrap()
-}
-fn get_access_token(config_file: String) -> Result<String, String> {
-    let client_id =
-        env::var("STRAVA_CLIENT_ID").expect("Missing the STRAVA_CLIENT_ID environment variable.");
-    let client_secret = env::var("STRAVA_CLIENT_SECRET")
-        .expect("Missing the STRAVA_CLIENT_SECRET environment variable.");
-
-    // Setup default config for auth
-    let mut config = auth::Config::new(
-        client_id.to_string(),
-        client_secret.to_string(),
-        Default::default(), // no refresh token so set to default which is none
-        AUTH_URL.to_string(),
-        TOKEN_URL.to_string(),
-    );
-
-    // Check if the config file exists and get the access token or get a new one
-    if Path::new(&config_file).exists() {
-        config.refresh_token = Some(auth_config::config_file::load_config().refresh_token);
-        let refresh_access_token = auth::get_refresh_token(config);
-        Ok(refresh_access_token.unwrap().to_string())
-    } else {
-        let access_token = auth::get_authorization(config);
-        Ok(access_token.unwrap().to_string())
-    }
-}
-
-/// Synchronizes the athlete's weight to Strava.
+/// Updates the authenticated athlete's weight in Strava.
 ///
 /// # Arguments
 ///
-/// * `weight_in_kgs` - The athlete's weight in kilograms. If `None`, the function panics.
+/// * `weight` - The athlete's weight in kilograms as a string
 ///
-/// # Panics
+/// # Returns
 ///
-/// The function panics if `weight_in_kgs` is `None`.
-pub fn sync_strava(weight_in_kgs: Option<String>) {
-    println!("Syncing to Strava...\n");
-    let weight = weight_in_kgs.unwrap();
-    update_athlete_weight(weight.as_str());
-    println!("Weight updated in Strava to {} kg\n", weight);
+/// Returns a `Result` containing the status of the update operation if successful,
+/// or a `StravaError` if the operation fails.
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - Authentication fails
+/// - The weight value is invalid
+/// - The API request fails
+pub fn update_athlete_weight(weight: &str) -> Result<String> {
+    let access_token =
+        obtain_access_token().wrap_err("Failed to obtain access token for weight update")?;
+
+    athlete::update_athlete_weight(&access_token, weight)
+        .map(|response| response.status().to_string())
+        .map_err(|e| StravaError::Api {
+            message: "Failed to update athlete weight".to_string(),
+            src: Some(e.to_string()),
+        })
+        .into_diagnostic()
+}
+
+/// Obtains an access token for Strava API operations.
+///
+/// # Returns
+///
+/// Returns a `Result` containing the access token if successful,
+/// or a `StravaError` if the operation fails.
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - The configuration file cannot be read
+/// - The environment variables are not set
+/// - The authentication process fails
+fn obtain_access_token() -> Result<String> {
+    let config_file = env::var(AUTH_CONFIG.config_file_env)
+        .unwrap_or_else(|_| AUTH_CONFIG.default_config_file.to_string());
+
+    get_access_token(&config_file).wrap_err("Failed to get access token")
+}
+
+/// Retrieves an access token using the provided configuration file.
+///
+/// # Arguments
+///
+/// * `config_file` - Path to the configuration file
+///
+/// # Returns
+///
+/// Returns a `Result` containing the access token if successful,
+/// or a `StravaError` if the operation fails.
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - Required environment variables are missing
+/// - The configuration file is invalid
+/// - The authentication process fails
+fn get_access_token(config_file: &str) -> Result<String> {
+    let client_id = env::var(AUTH_CONFIG.client_id_env).map_err(|_| StravaError::Config {
+        message: "Missing client ID".to_string(),
+        help: format!("Set the {} environment variable", AUTH_CONFIG.client_id_env),
+    })?;
+
+    let client_secret =
+        env::var(AUTH_CONFIG.client_secret_env).map_err(|_| StravaError::Config {
+            message: "Missing client secret".to_string(),
+            help: format!(
+                "Set the {} environment variable",
+                AUTH_CONFIG.client_secret_env
+            ),
+        })?;
+
+    let mut config = auth::Config::new(
+        client_id,
+        client_secret,
+        String::new(),
+        AUTH_CONFIG.auth_url.to_string(),
+        AUTH_CONFIG.token_url.to_string(),
+    );
+
+    let token = if Path::new(config_file).exists() {
+        config.refresh_token = Some(auth_config::config_file::load_config().refresh_token);
+        auth::get_refresh_token(config)
+    } else {
+        auth::get_authorization(config)
+    };
+
+    token
+        .map(|t| t.to_string())
+        .map_err(|e| StravaError::Authentication {
+            source: e.into(),
+            help: Some("Check your credentials and network connection".to_string()),
+        })
+        .into_diagnostic()
+}
+
+/// Synchronizes the athlete's weight with Strava.
+///
+/// # Arguments
+///
+/// * `weight_in_kgs` - Optional weight value in kilograms
+///
+/// # Returns
+///
+/// Returns a `Result` indicating success or failure of the synchronization.
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - The weight value is None
+/// - The weight update operation fails
+/// - Authentication fails
+pub fn sync_weight_to_strava(weight_in_kgs: Option<String>) -> Result<()> {
+    let weight = weight_in_kgs.ok_or_else(|| StravaError::Api {
+        message: "Weight value is required".to_string(),
+        src: None,
+    })?;
+
+    println!("Syncing to Strava...");
+    update_athlete_weight(&weight).wrap_err("Failed to sync weight with Strava")?;
+    println!("Weight updated in Strava to {} kg", weight);
+
+    Ok(())
 }

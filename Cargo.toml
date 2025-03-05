@@ -3,7 +3,7 @@ name = "fit-connect-rs"
 version = "0.1.0"
 edition = "2021"
 description = "fit syncing tool"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 
 [dependencies]
 withings-rs = {path = "../withings-rs"}
@@ -11,5 +11,6 @@ strava-client-rs = {path = "../strava-client-rs"}
 simple_logger = "4.3.3"
 chrono = "0.4.34"
 clap = { version = "4.5.23", features = ["env", "derive"] }
-serde_json = "1.0.135"
 colored_json = "5.0.0"
+miette = { version = "7.5.0", features = ["derive", "fancy", "default"] }
+thiserror = "1.0.69"

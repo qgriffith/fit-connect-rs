@@ -46,7 +46,7 @@ pub fn cli() {
             println!("weight: {:?}", weight_in_kgs);
             println!("strava_sync: {:?}", strava_sync);
             if strava_sync {
-                strava::sync_strava(weight_in_kgs);
+                strava::sync_weight_to_strava(weight_in_kgs).expect("TODO: panic message");
             }
         }
         Some(Commands::Strava {
@@ -54,13 +54,13 @@ pub fn cli() {
             get_stats,
         }) => {
             if get_athlete {
-                let athlete = strava::get_authed_athlete();
+                let athlete = strava::get_authenticated_athlete().unwrap();
                 let j = to_colored_json_auto(&athlete);
                 println!("{}", j.unwrap());
             }
             if get_stats {
-                let athlete = strava::get_athlete_stats();
-                let j = to_colored_json_auto(&athlete.unwrap());
+                let athlete = strava::get_authenticated_athlete().unwrap();
+                let j = to_colored_json_auto(&athlete);
                 println!("{}", j.unwrap());
             }
         }
