@@ -2,8 +2,10 @@
 name = "fit-connect-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Quenten Griffith <qgriffith@gmail.com>"]
 description = "fit syncing tool"
-
+repository = "https://github.com/qgriffith/fit-connect-rs"
+homepage = "https://github.com/qgriffith/fit-connect-rs"
 
 [dependencies]
 withings-rs = {path = "../withings-rs"}
