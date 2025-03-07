@@ -6,6 +6,9 @@ authors = ["Quenten Griffith <qgriffith@gmail.com>"]
 description = "fit syncing tool"
 repository = "https://github.com/qgriffith/fit-connect-rs"
 homepage = "https://github.com/qgriffith/fit-connect-rs"
+license = "MIT"
+keywords = ["strava", "binary", "withings", "client", "fit sync"]
+readme = "README.md"
 
 [dependencies]
 withings-rs = "0.1.3"
