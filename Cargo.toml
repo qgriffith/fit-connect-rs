@@ -7,7 +7,7 @@ description = "fit syncing tool"
 repository = "https://github.com/qgriffith/fit-connect-rs"
 homepage = "https://github.com/qgriffith/fit-connect-rs"
 license = "MIT"
-keywords = ["strava", "binary", "withings", "client", "fit sync"]
+keywords = ["strava", "binary", "withings", "client", "fit-sync"]
 readme = "README.md"
 
 [dependencies]
