@@ -6,7 +6,7 @@
 use miette::{Context, IntoDiagnostic, Result};
 use std::{env, path::Path};
 
-use strava_client_rs::api::{athlete, auth};
+use strava_client_rs::api::{athlete, auth, oauth::auth::get_authorization};
 use strava_client_rs::models::AthleteCollection;
 use strava_client_rs::util::auth_config;
 
@@ -72,6 +72,52 @@ struct StravaAuthConfig {
     client_id_env: &'static str,
     /// Environment variable name for the client secret
     client_secret_env: &'static str,
+}
+
+/// Authenticates with the Strava API using OAuth2 flow.
+///
+/// This function performs the following steps:
+/// 1. Retrieves client ID and secret from environment variables
+/// 2. Creates an authentication configuration
+/// 3. Initiates the OAuth2 authorization process
+///
+/// # Returns
+/// - `Ok(String)` - The access token for authenticated requests
+/// - `Err(StravaError)` - If authentication fails or configuration is missing
+///
+/// # Errors
+/// This function will return a `StravaError`:
+/// - `StravaError::Config` if required environment variables are not set:
+///   - `STRAVA_CLIENT_ID`
+///   - `STRAVA_CLIENT_SECRET`
+/// - `StravaError::Authentication` if the OAuth2 flow fails
+///
+pub fn auth_strava() -> Result<String, StravaError> {
+    let client_id = env::var(AUTH_CONFIG.client_id_env).map_err(|_| StravaError::Config {
+        message: "Missing client ID".to_string(),
+        help: format!("Set the {} environment variable", AUTH_CONFIG.client_id_env),
+    })?;
+
+    let client_secret =
+        env::var(AUTH_CONFIG.client_secret_env).map_err(|_| StravaError::Config {
+            message: "Missing client secret".to_string(),
+            help: format!(
+                "Set the {} environment variable",
+                AUTH_CONFIG.client_secret_env
+            ),
+        })?;
+
+    let config = auth::Config::new(
+        client_id,
+        client_secret,
+        String::new(),
+        AUTH_CONFIG.auth_url.to_string(),
+        AUTH_CONFIG.token_url.to_string(),
+    );
+    get_authorization(config).map_err(|e| StravaError::Authentication {
+        source: e.to_string().into(),
+        help: Some("Check your Strava credentials and try again".to_string()),
+    })
 }
 
 /// Retrieves the authenticated athlete's profile information from Strava.
