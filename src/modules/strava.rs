@@ -7,7 +7,7 @@ use miette::{Context, IntoDiagnostic, Result};
 use std::{env, path::Path};
 
 use strava_client_rs::api::{athlete, auth, oauth::auth::get_authorization};
-use strava_client_rs::models::AthleteCollection;
+use strava_client_rs::models::{athlete::AthleteStats, AthleteCollection};
 use strava_client_rs::util::auth_config;
 
 /// Possible errors that can occur during Strava API operations.
@@ -139,6 +139,36 @@ pub fn get_authenticated_athlete() -> Result<AthleteCollection> {
     athlete::get_athlete(&access_token)
         .map_err(|e| StravaError::Api {
             message: "Failed to get athlete information".to_string(),
+            src: Some(e.to_string()),
+        })
+        .into_diagnostic()
+}
+
+/// Retrieves statistics for the authenticated Strava athlete.
+///
+/// This function fetches various statistics for the athlete, including total distance,
+/// ride counts, run counts, and other activity metrics from the Strava API.
+///
+/// # Returns
+///
+/// Returns a `Result` containing either:
+/// * `AthleteStats` - The athlete's statistics
+/// * `StravaError` - Error if the operation fails
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// * Authentication fails during access token retrieval
+/// * The API request to get athlete stats fails
+pub fn get_athlete_stats() -> Result<AthleteStats> {
+    let access_token = obtain_access_token().wrap_err("Failed to obtain access token")?;
+    let athlete_id = get_authenticated_athlete()
+        .wrap_err("Failed to get athlete ID")?
+        .id;
+
+    athlete::get_athlete_stats(&access_token, &athlete_id.to_string())
+        .map_err(|e| StravaError::Api {
+            message: "Failed to get athlete stats".to_string(),
             src: Some(e.to_string()),
         })
         .into_diagnostic()

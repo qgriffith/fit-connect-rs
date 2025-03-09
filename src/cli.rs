@@ -69,8 +69,8 @@ pub fn cli() {
                 println!("{}", j.unwrap());
             }
             if get_stats {
-                let athlete = strava::get_authenticated_athlete().unwrap();
-                let j = to_colored_json_auto(&athlete);
+                let stats = strava::get_athlete_stats().unwrap();
+                let j = to_colored_json_auto(&stats);
                 println!("{}", j.unwrap());
             }
         }
