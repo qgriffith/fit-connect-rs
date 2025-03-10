@@ -1,6 +1,6 @@
 use crate::modules::strava;
 use crate::utils::get_and_format_weight;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use colored_json::to_colored_json_auto;
 
 #[derive(Parser)]
@@ -12,6 +12,18 @@ struct Cli {
 
     #[command(subcommand)]
     command: Option<Commands>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug, ValueEnum)]
+enum StatsOption {
+    /// Get all athlete stats
+    All,
+    /// Get year-to-date run stats only
+    YtdRun,
+    /// Get year-to-date ride stats only
+    YtdRide,
+    /// Get year-to-date swim stats only
+    YtdSwim,
 }
 
 #[derive(Subcommand)]
@@ -31,8 +43,8 @@ enum Commands {
         register: bool,
         #[arg(short = 'a', long)]
         get_athlete: bool,
-        #[arg(short = 's', long)]
-        get_stats: bool,
+        #[arg(short = 's', long, value_name = "OPTION")]
+        get_stats: Option<StatsOption>,
     },
 }
 
@@ -68,10 +80,29 @@ pub fn cli() {
                 let j = to_colored_json_auto(&athlete);
                 println!("{}", j.unwrap());
             }
-            if get_stats {
-                let stats = strava::get_athlete_stats().unwrap();
-                let j = to_colored_json_auto(&stats);
-                println!("{}", j.unwrap());
+            if let Some(stats_option) = get_stats {
+                match stats_option {
+                    StatsOption::All => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::YtdRun => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.ytd_run_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::YtdRide => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.ytd_ride_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::YtdSwim => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.ytd_swim_totals);
+                        println!("{}", j.unwrap());
+                    }
+                }
             }
         }
         None => {
