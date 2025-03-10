@@ -24,6 +24,12 @@ enum StatsOption {
     YtdRide,
     /// Get year-to-date swim stats only
     YtdSwim,
+    /// Get your last 4 weeks run stats only
+    RecentRun,
+    /// Get your last 4 weeks swim stats only,
+    RecentSwim,
+    ///Get your last 4 weeks ride stats only,
+    RecentRide,
 }
 
 #[derive(Subcommand)]
@@ -100,6 +106,21 @@ pub fn cli() {
                     StatsOption::YtdSwim => {
                         let stats = strava::get_athlete_stats().unwrap();
                         let j = to_colored_json_auto(&stats.ytd_swim_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::RecentRun => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.recent_run_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::RecentSwim => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.recent_swim_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::RecentRide => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.recent_ride_totals);
                         println!("{}", j.unwrap());
                     }
                 }
