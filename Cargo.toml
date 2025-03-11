@@ -1,6 +1,6 @@
 [package]
 name = "fit-connect-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Quenten Griffith <qgriffith@gmail.com>"]
 description = "fit syncing tool"
@@ -12,7 +12,7 @@ readme = "README.md"
 
 [dependencies]
 withings-rs = "0.1.3"
-strava-client-rs = { path = "../strava-client-rs" }
+strava-client-rs = "0.2.5"
 simple_logger = "4.3.3"
 chrono = "0.4.34"
 clap = { version = "4.5.23", features = ["env", "derive"] }
