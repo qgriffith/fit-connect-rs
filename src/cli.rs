@@ -1,6 +1,6 @@
 use crate::modules::strava;
 use crate::utils::get_and_format_weight;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use colored_json::to_colored_json_auto;
 
 #[derive(Parser)]
@@ -12,6 +12,28 @@ struct Cli {
 
     #[command(subcommand)]
     command: Option<Commands>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug, ValueEnum)]
+enum StatsOption {
+    /// Get all athlete stats
+    All,
+    /// Get year-to-date run stats only
+    YtdRun,
+    /// Get your YTD Run in miles only
+    YtdRunMiles,
+    /// Get year-to-date ride stats only
+    YtdRide,
+    /// Get year-to-date swim stats only
+    YtdSwim,
+    /// Get your last 4 weeks run stats only
+    RecentRun,
+    /// Get your last 4 weeks of run in miles only
+    RecentRunMiles,
+    /// Get your last 4 weeks swim stats only,
+    RecentSwim,
+    ///Get your last 4 weeks ride stats only,
+    RecentRide,
 }
 
 #[derive(Subcommand)]
@@ -31,8 +53,8 @@ enum Commands {
         register: bool,
         #[arg(short = 'a', long)]
         get_athlete: bool,
-        #[arg(short = 's', long)]
-        get_stats: bool,
+        #[arg(short = 's', long, value_name = "OPTION")]
+        get_stats: Option<StatsOption>,
     },
 }
 
@@ -68,10 +90,54 @@ pub fn cli() {
                 let j = to_colored_json_auto(&athlete);
                 println!("{}", j.unwrap());
             }
-            if get_stats {
-                let stats = strava::get_athlete_stats().unwrap();
-                let j = to_colored_json_auto(&stats);
-                println!("{}", j.unwrap());
+            if let Some(stats_option) = get_stats {
+                match stats_option {
+                    StatsOption::All => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::YtdRun => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.ytd_run_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::YtdRunMiles => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let miles = stats.ytd_run_totals.distance_in_miles();
+                        println!("{:.2}", miles);
+                    }
+                    StatsOption::YtdRide => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.ytd_ride_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::YtdSwim => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.ytd_swim_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::RecentRun => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.recent_run_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::RecentRunMiles => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let miles = stats.recent_run_totals.distance_in_miles();
+                        println!("{:.2}", miles);
+                    }
+                    StatsOption::RecentSwim => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.recent_swim_totals);
+                        println!("{}", j.unwrap());
+                    }
+                    StatsOption::RecentRide => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let j = to_colored_json_auto(&stats.recent_ride_totals);
+                        println!("{}", j.unwrap());
+                    }
+                }
             }
         }
         None => {

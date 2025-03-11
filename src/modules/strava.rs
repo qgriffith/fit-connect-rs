@@ -6,8 +6,8 @@
 use miette::{Context, IntoDiagnostic, Result};
 use std::{env, path::Path};
 
-use strava_client_rs::api::{athlete, auth, oauth::auth::get_authorization};
-use strava_client_rs::models::{athlete::AthleteStats, AthleteCollection};
+use strava_client_rs::api::{athlete, auth};
+use strava_client_rs::models::{AthleteCollection, AthleteStats};
 use strava_client_rs::util::auth_config;
 
 /// Possible errors that can occur during Strava API operations.
@@ -114,7 +114,7 @@ pub fn auth_strava() -> Result<String, StravaError> {
         AUTH_CONFIG.auth_url.to_string(),
         AUTH_CONFIG.token_url.to_string(),
     );
-    get_authorization(config).map_err(|e| StravaError::Authentication {
+    auth::get_authorization(config).map_err(|e| StravaError::Authentication {
         source: e.to_string().into(),
         help: Some("Check your Strava credentials and try again".to_string()),
     })

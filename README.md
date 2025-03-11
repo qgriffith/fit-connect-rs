@@ -52,3 +52,7 @@ Options:
 > export STRAVA_CLIENT_ID=72920
 > export STRAVA_CLIENT_SECRET=xxxx
 > export STRAVA_CONFIG_FILE=/home/xxx/.strava-rs/config.json
+
+## Versions
+
+* [Release Notes](https://github.com/qgriffith/fit-connect-rs/releases)
