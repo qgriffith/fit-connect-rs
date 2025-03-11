@@ -20,12 +20,16 @@ enum StatsOption {
     All,
     /// Get year-to-date run stats only
     YtdRun,
+    /// Get your YTD Run in miles only
+    YtdRunMiles,
     /// Get year-to-date ride stats only
     YtdRide,
     /// Get year-to-date swim stats only
     YtdSwim,
     /// Get your last 4 weeks run stats only
     RecentRun,
+    /// Get your last 4 weeks of run in miles only
+    RecentRunMiles,
     /// Get your last 4 weeks swim stats only,
     RecentSwim,
     ///Get your last 4 weeks ride stats only,
@@ -98,6 +102,11 @@ pub fn cli() {
                         let j = to_colored_json_auto(&stats.ytd_run_totals);
                         println!("{}", j.unwrap());
                     }
+                    StatsOption::YtdRunMiles => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let miles = stats.ytd_run_totals.distance_in_miles();
+                        println!("{:.2}", miles);
+                    }
                     StatsOption::YtdRide => {
                         let stats = strava::get_athlete_stats().unwrap();
                         let j = to_colored_json_auto(&stats.ytd_ride_totals);
@@ -112,6 +121,11 @@ pub fn cli() {
                         let stats = strava::get_athlete_stats().unwrap();
                         let j = to_colored_json_auto(&stats.recent_run_totals);
                         println!("{}", j.unwrap());
+                    }
+                    StatsOption::RecentRunMiles => {
+                        let stats = strava::get_athlete_stats().unwrap();
+                        let miles = stats.recent_run_totals.distance_in_miles();
+                        println!("{:.2}", miles);
                     }
                     StatsOption::RecentSwim => {
                         let stats = strava::get_athlete_stats().unwrap();
